@@ -8,89 +8,70 @@
  * @format
  */
 
-import React, {type PropsWithChildren} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import { Cluster, clusterApiUrl, Connection, PublicKey, Keypair } from '@solana/web3.js';
+import { encodeURL, createQR } from '@solana/pay';
+import BigNumber from 'bignumber.js';
+import { establishConnection } from './establishConnection';
+import { simulateCheckout } from './simulateCheckout';
+import { MERCHANT_WALLET } from './constants1';
 
-const Section: React.FC<
-  PropsWithChildren<{
-    title: string;
-  }>
-> = ({children, title}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-};
+export function elipsify(str = '', len = 4) {
+  if (str.length > 30) {
+    return (
+      str.substring(0, len) +
+      '...' +
+      str.substring(str.length - len, str.length)
+    );
+  }
+  return str;
+}
 
 const App = () => {
-  const isDarkMode = useColorScheme() === 'dark';
+  async function main() {
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+    console.log("Let's simulate a Solana Pay flow ... \n");
+    let paymentStatus: string;
+
+    console.log('1. ✅ Establish connection to the cluster');
+    const connection = await establishConnection();
+    console.log('\n2. 🛍 Simulate a customer checkout \n');
+    const { label, message, memo, amount, reference } = await simulateCheckout();
+    console.log('3. 💰 Create a payment request link \n');
+    const url = encodeURL({ recipient: MERCHANT_WALLET, amount, reference, label, message, memo });
+    console.log(url, "!")
+  }
+  useEffect(() => {
+    main()
+    // const amount = new BigNumber(20);
+    // const reference = new Keypair().publicKey;
+    // const label = 'Jungle Cats store';
+    // const message = 'Jungle Cats store - your order - #001234';
+    // const memo = 'JC#4098';
+
+    // /**
+    //  * Create a payment request link
+    //  *
+    //  * Solana Pay uses a standard URL scheme across wallets for native SOL and SPL Token payments.
+    //  * Several parameters are encoded within the link representing an intent to collect payment from a customer.
+    //  */
+    // console.log('3. 💰 Create a payment request link \n');
+    // const url = encodeURL({ recipient, amount, reference, label, message, memo });
+    // const qrCode = createQR(url);
+    // console.log(qrCode, "qr")
+  })
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView>
+
     </SafeAreaView>
   );
 };
